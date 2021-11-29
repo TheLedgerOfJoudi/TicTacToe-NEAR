@@ -1,4 +1,4 @@
-import { PersistentVector, PersistentMap, u128, RNG, context } from "near-sdk-core";
+import { PersistentMap, u128, RNG, context } from "near-sdk-core";
 
 export enum GameState {
     Created,
@@ -7,7 +7,7 @@ export enum GameState {
 }
 
 @nearBindgen
-export class TicTacToe {
+export class Game {
     gameId: u32;
     gameState: GameState;
     player1: string;
@@ -15,9 +15,8 @@ export class TicTacToe {
     winner: string;
     amount1: u128;
     amount2: u128;
-    roundsPlayed: u8;
     nextPlayer: string;
-    board: Array<u8>;
+    board: Array<Row>;
 
     constructor() {
         const rng = new RNG<u32>(1, u32.MAX_VALUE);
@@ -29,13 +28,24 @@ export class TicTacToe {
         this.winner = "";
         this.amount1 = context.attachedDeposit;
         this.amount2 = u128.Zero;
-        this.roundsPlayed = 0;
         this.nextPlayer = this.player1;
-        this.board = new Array<u8>(9);
-        for (let i = 0; i < 9; i++) {
-            this.board[i] = 0;
+        this.board = new Array<Row>(3);
+        for (let i = 0; i < 3; i++) {
+            this.board[i] = new Row(0);
         }
     }
 }
 
-export const games = new PersistentMap<u32, TicTacToe>("g");
+@nearBindgen
+export class Row {
+    data: Array<u8>;
+
+    constructor(default_value : u8) {
+        this.data = new Array<u8>(3);
+        for(let i=0;i<3;i++){
+            this.data[i] = default_value;
+        }
+    }
+}
+
+export const games = new PersistentMap<u32, Game>("g");
