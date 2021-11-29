@@ -1,5 +1,5 @@
 import { context, ContractPromiseBatch, u128 } from "near-sdk-core";
-import { Game, games, GameState } from "./models";
+import { Game, Row, games, GameState } from "./models";
 
 export function createGame(): u32 {
     const game = new Game();
@@ -47,13 +47,43 @@ export function play(gameId: u32, row: u32, col: u32): boolean {
 }
 
 export function isGameOver(gameId: u32): boolean {
+    let game = games.getSome(gameId);
+    const firstRow = game.board[0];
+    const secondRow = game.board[1];
+    const thirdRow = game.board[2];
 
-    return true;
+    if (
+        isEqual(firstRow.data[0], firstRow.data[1], firstRow.data[2]) ||
+        isEqual(secondRow.data[0], secondRow.data[1], secondRow.data[2]) ||
+        isEqual(thirdRow.data[0], thirdRow.data[1], thirdRow.data[2]) ||
+        isEqual(firstRow.data[0], secondRow.data[0], thirdRow.data[0]) ||
+        isEqual(firstRow.data[1], secondRow.data[1], thirdRow.data[1]) ||
+        isEqual(firstRow.data[2], secondRow.data[2], thirdRow.data[2]) ||
+        isEqual(firstRow.data[0], secondRow.data[1], thirdRow.data[2]) ||
+        isEqual(firstRow.data[2], secondRow.data[1], thirdRow.data[0])
+    ) {
+        return true;
+    }
+    return false;
 }
+
+export function isEqual(x: u8, y: u8, z: u8): boolean {
+    if (x == y && y == z && z != 0) {
+        return true;
+    }
+    return false;
+}
+
+export function getBoard(gameId:u32):Array<Row>{
+    assert(games.contains(gameId), "This game does not exist");
+    const game = games.getSome(gameId);
+    return game.board;
+}
+
 export function claimReward(gameId: u32): boolean {
     assert(games.contains(gameId), "This game does not exist");
     let game = games.getSome(gameId);
-    assert(game.gameState = GameState.Completed, "The game is not over yet!");
+    assert(game.gameState == GameState.Completed, "The game is not over yet!");
     assert(context.sender == game.winner, "Only the winner can claim the reward");
     const to_winner = ContractPromiseBatch.create(context.sender);
     const reward = u128.add(game.amount1, game.amount2);
