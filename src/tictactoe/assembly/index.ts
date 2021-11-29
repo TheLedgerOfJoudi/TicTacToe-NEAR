@@ -27,6 +27,7 @@ export function play(gameId: u32, row: u32, col: u32): boolean {
     assert(game.nextPlayer == context.sender, "It is not your turn!");
     assert(game.gameState == GameState.InProgress, "This game is not on progress");
     let chosen_row = game.board[row];
+    assert(chosen_row.data[col] == 0, "This cell is already marked!")
     if (context.sender == game.player1) {
         chosen_row.data[col] = 1;
         game.board[row] = chosen_row;
@@ -37,12 +38,12 @@ export function play(gameId: u32, row: u32, col: u32): boolean {
         game.board[row] = chosen_row;
         game.nextPlayer = game.player1;
     }
-    let gameIsOver = isGameOver(game.gameId);
+    const gameIsOver = isGameOver(gameId);
     if (gameIsOver) {
         game.winner = context.sender;
         game.gameState = GameState.Completed;
     }
-    games.set(game.gameId, game);
+    games.set(gameId, game);
     return true;
 }
 
@@ -74,7 +75,7 @@ export function isEqual(x: u8, y: u8, z: u8): boolean {
     return false;
 }
 
-export function getBoard(gameId:u32):Array<Row>{
+export function getBoard(gameId: u32): Array<Row> {
     assert(games.contains(gameId), "This game does not exist");
     const game = games.getSome(gameId);
     return game.board;

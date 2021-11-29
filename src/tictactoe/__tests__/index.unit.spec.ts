@@ -1,43 +1,66 @@
-import * as contract from "../assembly";
-import { VMContext } from "near-sdk-as";
-describe("Voting contract", () => {
+import { createGame, joinGame, play, isGameOver, claimReward } from "../assembly";
+import { VMContext, u128 } from "near-sdk-as";
 
-  it("adds a proposal", () => {
-    VMContext.setSigner_account_id(process.env.get("user1"));
-    const added = contract.addProposal("proposal");
-    expect(added).toBeTruthy();
+describe("TicTacToe tests", () => {
+  it("should create a game", () => {
+    const gameId = createGame();
+    expect(gameId).toBeTruthy();
   })
 
-  it("creates a voter", () => {
-    VMContext.setSigner_account_id(process.env.get("user1"));
-    const created = contract.createVoter();
-    expect(created).toBeTruthy();
+  it("should allow users to join", () => {
+    const gameId = createGame();
+    VMContext.setSigner_account_id("Alice.testnet");
+    //send one NEAR
+    //VMContext.setAttached_deposit(u128.from("1000000000000000000000000"));
+    const res = joinGame(gameId);
+    expect(res).toBe("Joined!");
   })
 
-  it("allows users to vote", () => {
-    VMContext.setSigner_account_id(process.env.get("user1"));
-    contract.addProposal("proposal");
-    contract.createVoter();
-    const voted = contract.vote("proposal");
-    expect(voted).toBeTruthy();
+  it("should allow users to play", () => {
+    VMContext.setSigner_account_id("Bob.testnet");
+    const gameId = createGame();
+    VMContext.setSigner_account_id("Alice.testnet");
+    joinGame(gameId);
+    VMContext.setSigner_account_id("Bob.testnet");
+    const played = play(gameId, 0, 0);
+    expect(played).toBeTruthy();
   })
 
-  it("prohibits revoting", () => {
-    VMContext.setSigner_account_id(process.env.get("user1"));
-    contract.addProposal("proposal");
-    contract.createVoter();
-    contract.vote("proposal");
-    const voted = contract.vote("proposal");
-    expect(voted).toBeFalsy();
+  it("should know when the game is over", () => {
+    VMContext.setSigner_account_id("Bob.testnet");
+    const gameId = createGame();
+    VMContext.setSigner_account_id("Alice.testnet");
+    joinGame(gameId);
+    VMContext.setSigner_account_id("Bob.testnet");
+    play(gameId, 0, 0);
+    VMContext.setSigner_account_id("Alice.testnet");
+    play(gameId, 0, 1);
+    VMContext.setSigner_account_id("Bob.testnet");
+    play(gameId, 1, 1);
+    VMContext.setSigner_account_id("Alice.testnet");
+    play(gameId, 1, 0);
+    VMContext.setSigner_account_id("Bob.testnet");
+    play(gameId, 2, 2);
+    const over = isGameOver(gameId);
+    expect(over).toBeTruthy();
   })
 
-  it("gets the winning proposal", () => {
-    VMContext.setSigner_account_id(process.env.get("user1"));
-    contract.addProposal("proposal");
-    contract.createVoter();
-    contract.vote("proposal");
-    const winningProposal = contract.getWinningProposal();
-    expect(winningProposal).toBe("proposal");
+  it("should reward the winner", () => {
+    VMContext.setSigner_account_id("Bob.testnet");
+    const gameId = createGame();
+    VMContext.setSigner_account_id("Alice.testnet");
+    joinGame(gameId);
+    VMContext.setSigner_account_id("Bob.testnet");
+    play(gameId, 0, 0);
+    VMContext.setSigner_account_id("Alice.testnet");
+    play(gameId, 0, 1);
+    VMContext.setSigner_account_id("Bob.testnet");
+    play(gameId, 1, 1);
+    VMContext.setSigner_account_id("Alice.testnet");
+    play(gameId, 1, 0);
+    VMContext.setSigner_account_id("Bob.testnet");
+    play(gameId, 2, 2);
+    const rewarded = claimReward(gameId);
+    expect(rewarded).toBeTruthy();
   })
-
 })
