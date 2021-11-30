@@ -10,8 +10,6 @@ describe("TicTacToe tests", () => {
   it("should allow users to join", () => {
     const gameId = createGame();
     VMContext.setSigner_account_id("Alice.testnet");
-    //send one NEAR
-    //VMContext.setAttached_deposit(u128.from("1000000000000000000000000"));
     const res = joinGame(gameId);
     expect(res).toBe("Joined!");
   })

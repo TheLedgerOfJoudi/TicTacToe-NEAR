@@ -40,9 +40,9 @@ export class Game {
 export class Row {
     data: Array<u8>;
 
-    constructor(default_value : u8) {
+    constructor(default_value: u8) {
         this.data = new Array<u8>(3);
-        for(let i=0;i<3;i++){
+        for (let i = 0; i < 3; i++) {
             this.data[i] = default_value;
         }
     }
